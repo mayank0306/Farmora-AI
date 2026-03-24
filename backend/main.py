@@ -24,7 +24,7 @@ import uuid
 app = FastAPI()
 
 origins = [
-    "http://localhost:3000",  # Allow requests from your frontend
+    "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
 
@@ -35,24 +35,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# Load models
+
 CROP_YIELD_MODEL = joblib.load('Trained_models/CROP_YIELD_MODEL.joblib')
 SOIL_CROP_RECOMMENDATION_MODEL = joblib.load('Trained_models/Soil_crop_recom.joblib')
 DISEASE_DETECTION_MODEL = load_model('Trained_models/CNN/Disease_Detection_model[CNN].h5')
 DISEASE_CLASSES = np.load('Trained_models/CNN/disease_classes.npy', allow_pickle=True)
 FERTILIZER_RECOMMENDATION_MODEL = joblib.load('Trained_models/fertilizer_recommendation_model.joblib')
 
-# Load LSTM Weather Forecast Model and preprocessing tools
 load_dotenv()
 WEATHER_API_KEY = os.getenv('WEATHER_API_KEY')
 MARKET_MODEL_PATH = 'Trained_models/lstm_model.keras'
 MARKET_DATA_PATH = 'Datasets/synthetic_crop_prices_2years.csv'
 
-
 @app.get("/")
 async def root():
     return {"message": "Welcome to the CROPIX API!"}
-
 
 class CropYieldInput(BaseModel):
     N: float
@@ -69,15 +66,12 @@ class CropYieldInput(BaseModel):
     Crop_Year: int
     Pesticide: float
     Annual_Rainfall: float
-    Production: float = None  # Optional, will be estimated if not provided
+    Production: float = None
 
 @app.post("/predict_crop_yield/")
 async def predict_crop_yield(input: CropYieldInput):
-    # The trained model expects: ['Area', 'Production', 'Annual_Rainfall', 'Fertilizer', 'Pesticide']
-    # If Production is not provided, estimate it based on Area (simple heuristic)
     production = input.Production if input.Production is not None else input.Area * 1000
     
-    # Prepare input with only the features the model expects
     model_input = pd.DataFrame([{
         'Area': input.Area,
         'Production': production,
@@ -115,11 +109,9 @@ async def detect_disease(input: DiseaseDetectionInput):
     import uuid
 
     try:
-        # Decode the base64 string
         image_data = base64.b64decode(input.image_base64)
         image = Image.open(io.BytesIO(image_data))
 
-        # Save the image temporarily
         temp_filename = f"temp_image_{uuid.uuid4()}.png"
         temp_filepath = os.path.join("temp_images", temp_filename)
         os.makedirs("temp_images", exist_ok=True)
@@ -135,7 +127,6 @@ async def detect_disease(input: DiseaseDetectionInput):
         predicted_class = DISEASE_CLASSES[predicted_class_index]
         confidence = float(np.max(predictions))
 
-        # Clean up the temporary file
         os.remove(temp_filepath)
         return {"predicted_disease": predicted_class, "confidence": confidence}
     except Exception as e:
@@ -220,13 +211,11 @@ async def forecast_market_prices(input: MarketPriceForecastInput):
     model = load_model(MARKET_MODEL_PATH)
     df_historical = pd.read_csv(MARKET_DATA_PATH)
     
-    # Remove non-price columns
     date_columns = ['Month', 'Month Name']
     for col in date_columns:
         if col in df_historical.columns:
             df_historical = df_historical.drop(columns=[col])
     
-    # Map frontend crop names to dataset column names
     crop_name_mapping = {
         'Wheat': 'Wheat (INR/Quintal)',
         'Rice': 'Paddy (Rice) (INR/Quintal)',
@@ -241,13 +230,12 @@ async def forecast_market_prices(input: MarketPriceForecastInput):
     if mapped_crop_name not in df_historical.columns:
         return {"error": f"Crop '{input.crop_name}' not found in historical data. Available crops: {list(crop_name_mapping.keys())}"}
 
-    # Use only the requested crop's data for forecasting
     crop_data = df_historical[[mapped_crop_name]].values
     
     scaler = MinMaxScaler(feature_range=(0, 1))
     scaled_data = scaler.fit_transform(crop_data)
 
-    n_steps = 12  # This must match the model's training configuration
+    n_steps = 12
     n_features = 1
 
     last_known_data = scaled_data[-n_steps:]
@@ -261,11 +249,9 @@ async def forecast_market_prices(input: MarketPriceForecastInput):
 
     forecast_prices = scaler.inverse_transform(np.array(forecast).reshape(-1, 1))
 
-    # Generate future dates (weekly forecast)
     base_date = pd.to_datetime('today')
     future_dates = [base_date + pd.Timedelta(weeks=i) for i in range(1, input.weeks_to_forecast + 1)]
     
-    # Create forecast dictionary
     forecast_dict = {
         input.crop_name: {
             date.strftime('%Y-%m-%d'): float(price[0]) 
@@ -275,6 +261,5 @@ async def forecast_market_prices(input: MarketPriceForecastInput):
 
     return {"forecast": forecast_dict}
 
-# Load the disease detection model and classes
 DISEASE_DETECTION_MODEL = tf.keras.models.load_model("Trained_models/CNN/Disease_Detection_model[CNN].h5")
 DISEASE_CLASSES = np.load("Trained_models/CNN/disease_classes.npy", allow_pickle=True)

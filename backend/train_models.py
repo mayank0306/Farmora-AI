@@ -24,10 +24,7 @@ print("=" * 80)
 
 # Create directories if they don't exist
 os.makedirs('Trained_models/CNN', exist_ok=True)
-
-# ============================================================================
 # 1. CROP YIELD MODEL
-# ============================================================================
 print("\n[1/5] Training Crop Yield Prediction Model...")
 try:
     df_yield = pd.read_csv('Datasets/Crop_yield.csv')
@@ -54,9 +51,7 @@ try:
 except Exception as e:
     print(f"   ✗ Error training Crop Yield Model: {e}")
 
-# ============================================================================
 # 2. SOIL CROP RECOMMENDATION MODEL
-# ============================================================================
 print("\n[2/5] Training Soil Crop Recommendation Model...")
 try:
     df_soil = pd.read_csv('Datasets/Soil_Crop_recommendation.csv')
@@ -76,9 +71,7 @@ try:
 except Exception as e:
     print(f"   ✗ Error training Soil Crop Recommendation Model: {e}")
 
-# ============================================================================
 # 3. FERTILIZER RECOMMENDATION MODEL
-# ============================================================================
 print("\n[3/5] Training Fertilizer Recommendation Model...")
 try:
     df_fert = pd.read_csv('Datasets/fertilizer_training_data.csv')
@@ -123,9 +116,7 @@ try:
 except Exception as e:
     print(f"   ✗ Error training Fertilizer Recommendation Model: {e}")
 
-# ============================================================================
 # 4. DISEASE DETECTION MODEL (CNN)
-# ============================================================================
 print("\n[4/5] Training Disease Detection Model (CNN)...")
 try:
     df_cnn = pd.read_csv('Datasets/CNN_labels.csv')
@@ -161,9 +152,7 @@ try:
 except Exception as e:
     print(f"   ✗ Error creating Disease Detection Model: {e}")
 
-# ============================================================================
 # 5. MARKET PRICE FORECAST MODEL (LSTM)
-# ============================================================================
 print("\n[5/5] Training Market Price Forecast Model (LSTM)...")
 try:
     df_market = pd.read_csv('Datasets/synthetic_crop_prices_2years.csv')

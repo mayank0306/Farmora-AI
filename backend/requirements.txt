@@ -23,7 +23,7 @@ matplotlib
 mdurl
 ml_dtypes
 namex
-numpy==1.23.5
+numpy<1.24
 opt_einsum
 optree
 packaging

@@ -30,17 +30,54 @@ origins =[
 
 app .add_middleware (
 CORSMiddleware ,
-allow_origins =origins ,
+allow_origins =["*"],
 allow_credentials =True ,
 allow_methods =["*"],
 allow_headers =["*"],
 )
 
-CROP_YIELD_MODEL =joblib .load ('Trained_models/CROP_YIELD_MODEL.joblib')
-SOIL_CROP_RECOMMENDATION_MODEL =joblib .load ('Trained_models/Soil_crop_recom.joblib')
-DISEASE_DETECTION_MODEL =load_model ('Trained_models/CNN/Disease_Detection_model[CNN].h5')
-DISEASE_CLASSES =np .load ('Trained_models/CNN/disease_classes.npy',allow_pickle =True )
-FERTILIZER_RECOMMENDATION_MODEL =joblib .load ('Trained_models/fertilizer_recommendation_model.joblib')
+print("Starting server...")
+
+CROP_YIELD_MODEL = None
+SOIL_CROP_RECOMMENDATION_MODEL = None
+DISEASE_DETECTION_MODEL = None
+DISEASE_CLASSES = None
+FERTILIZER_RECOMMENDATION_MODEL = None
+
+try:
+    print("Loading Crop Yield Model...")
+    CROP_YIELD_MODEL =joblib .load ('Trained_models/CROP_YIELD_MODEL.joblib')
+    print("Crop Yield Model loaded successfully")
+except Exception as e:
+    print("ERROR LOADING CROP YIELD MODEL:", e)
+
+try:
+    print("Loading Soil Crop Recommendation Model...")
+    SOIL_CROP_RECOMMENDATION_MODEL =joblib .load ('Trained_models/Soil_crop_recom.joblib')
+    print("Soil Crop Recommendation Model loaded successfully")
+except Exception as e:
+    print("ERROR LOADING SOIL CROP RECOMMENDATION MODEL:", e)
+
+try:
+    print("Loading Disease Detection Model...")
+    DISEASE_DETECTION_MODEL =load_model ('Trained_models/CNN/Disease_Detection_model[CNN].h5')
+    print("Disease Detection Model loaded successfully")
+except Exception as e:
+    print("ERROR LOADING DISEASE DETECTION MODEL:", e)
+
+try:
+    print("Loading Disease Classes...")
+    DISEASE_CLASSES =np .load ('Trained_models/CNN/disease_classes.npy',allow_pickle =True )
+    print("Disease Classes loaded successfully")
+except Exception as e:
+    print("ERROR LOADING DISEASE CLASSES:", e)
+
+try:
+    print("Loading Fertilizer Recommendation Model...")
+    FERTILIZER_RECOMMENDATION_MODEL =joblib .load ('Trained_models/fertilizer_recommendation_model.joblib')
+    print("Fertilizer Recommendation Model loaded successfully")
+except Exception as e:
+    print("ERROR LOADING FERTILIZER RECOMMENDATION MODEL:", e)
 
 load_dotenv ()
 WEATHER_API_KEY =os .getenv ('WEATHER_API_KEY')
@@ -70,6 +107,9 @@ class CropYieldInput (BaseModel ):
 
 @app .post ("/predict_crop_yield/")
 async def predict_crop_yield (input :CropYieldInput ):
+    if CROP_YIELD_MODEL is None:
+        return {"error": "Crop yield model is currently unavailable."}
+
     production =input .Production if input .Production is not None else input .Area *1000 
 
     model_input =pd .DataFrame ([{
@@ -94,6 +134,9 @@ class SoilCropRecommendationInput (BaseModel ):
 
 @app .post ("/recommend_soil_crop/")
 async def recommend_soil_crop (input :SoilCropRecommendationInput ):
+    if SOIL_CROP_RECOMMENDATION_MODEL is None:
+        return {"error": "Soil crop recommendation model is currently unavailable."}
+
     df_input =pd .DataFrame ([input .dict ()])
     prediction_label =SOIL_CROP_RECOMMENDATION_MODEL .predict (df_input )[0 ]
     return {"recommended_crop":prediction_label }
@@ -103,6 +146,9 @@ class DiseaseDetectionInput (BaseModel ):
 
 @app .post ("/detect_disease/")
 async def detect_disease (input :DiseaseDetectionInput ):
+    if DISEASE_DETECTION_MODEL is None or DISEASE_CLASSES is None:
+        return {"error": "Disease detection model is currently unavailable."}
+
     from PIL import Image 
     import io 
     import base64 
@@ -198,6 +244,9 @@ class FertilizerRecommendationInput (BaseModel ):
 
 @app .post ("/recommend_fertilizer/")
 async def recommend_fertilizer (input :FertilizerRecommendationInput ):
+    if FERTILIZER_RECOMMENDATION_MODEL is None:
+        return {"error": "Fertilizer recommendation model is currently unavailable."}
+
     df_input =pd .DataFrame ([input .dict ()])
     prediction =FERTILIZER_RECOMMENDATION_MODEL .predict (df_input )[0 ]
     return {"recommended_N":prediction [0 ].item (),"recommended_P":prediction [1 ].item (),"recommended_K":prediction [2 ].item ()}
@@ -208,8 +257,17 @@ class MarketPriceForecastInput (BaseModel ):
 
 @app .post ("/forecast_market_prices/")
 async def forecast_market_prices (input :MarketPriceForecastInput ):
-    model =load_model (MARKET_MODEL_PATH )
-    df_historical =pd .read_csv (MARKET_DATA_PATH )
+    try:
+        model =load_model (MARKET_MODEL_PATH )
+    except Exception as e:
+        print("ERROR LOADING MARKET MODEL:", e)
+        return {"error": "Market forecast model is currently unavailable."}
+
+    try:
+        df_historical =pd .read_csv (MARKET_DATA_PATH )
+    except Exception as e:
+        print("ERROR LOADING MARKET DATA:", e)
+        return {"error": "Market historical data is currently unavailable."}
 
     date_columns =['Month','Month Name']
     for col in date_columns :
@@ -261,5 +319,7 @@ async def forecast_market_prices (input :MarketPriceForecastInput ):
 
     return {"forecast":forecast_dict }
 
-DISEASE_DETECTION_MODEL =tf .keras .models .load_model ("Trained_models/CNN/Disease_Detection_model[CNN].h5")
-DISEASE_CLASSES =np .load ("Trained_models/CNN/disease_classes.npy",allow_pickle =True )
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)

@@ -1,5 +1,7 @@
 "use client"
 
+import { API_BASE_URL } from "@/lib/api";
+
 import type React from "react"
 
 import { useState } from "react"
@@ -54,7 +56,7 @@ export default function FormPage() {
     setShowResult(false)
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/predict_crop_yield/", {
+      const response = await fetch(`${API_BASE_URL}/predict_crop_yield/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

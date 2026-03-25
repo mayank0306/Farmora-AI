@@ -1,5 +1,7 @@
 "use client"
 
+import { API_BASE_URL } from "@/lib/api";
+
 import { useState } from "react"
 import { Navigation } from "@/components/navigation"
 import { motion } from "framer-motion"
@@ -29,7 +31,7 @@ export default function MarketForecastPage() {
     setForecastData(null)
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/forecast_market_prices/", {
+      const response = await fetch(`${API_BASE_URL}/forecast_market_prices/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

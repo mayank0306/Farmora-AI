@@ -1,5 +1,7 @@
 "use client";
 
+import { API_BASE_URL } from "@/lib/api";
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,7 +37,7 @@ export default function FertilizerRecommendationPage() {
     setRecommendation(null);
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/recommend_fertilizer/", {
+      const response = await fetch(`${API_BASE_URL}/recommend_fertilizer/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

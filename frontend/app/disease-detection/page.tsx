@@ -1,5 +1,7 @@
 "use client"
 
+import { API_BASE_URL } from "@/lib/api";
+
 import type React from "react"
 
 import { useState } from "react"
@@ -31,7 +33,7 @@ export default function DiseaseDetectionPage() {
 
     try {
       const base64Image = imageData.split(",")[1]; // Extract base64 part
-      const response = await fetch("http://127.0.0.1:8000/detect_disease/", {
+      const response = await fetch(`${API_BASE_URL}/detect_disease/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

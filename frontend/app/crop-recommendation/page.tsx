@@ -85,7 +85,11 @@ export default function FormPage() {
       }
 
       const data = await response.json();
-      setRecommendation(data.predicted_yield);
+      if (data.error) {
+         setRecommendation("Error: " + data.error);
+      } else {
+         setRecommendation(data.predicted_yield);
+      }
       setShowResult(true);
     } catch (error) {
       console.error("Error fetching crop yield prediction:", error);

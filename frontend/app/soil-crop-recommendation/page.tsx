@@ -56,7 +56,12 @@ export default function SoilCropRecommendationPage() {
       }
 
       const data = await response.json();
-      setRecommendation(data.recommended_crop);
+      if (data.error) {
+        setError(data.error);
+        setRecommendation(null);
+      } else {
+        setRecommendation(data.recommended_crop);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -255,7 +260,7 @@ export default function SoilCropRecommendationPage() {
           </motion.div>
         )}
 
-        {recommendation && (
+        {!error && recommendation && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

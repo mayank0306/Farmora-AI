@@ -10,3 +10,5 @@ services:
         value: "3.10.12"
       - key: PORT
         value: "10000"
+      - key: WEATHER_API_KEY
+        value: "7a24cc4e1e02ad6716da7411179e2696"

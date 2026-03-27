@@ -55,7 +55,12 @@ export default function FertilizerRecommendationPage() {
       }
 
       const data = await response.json();
-      setRecommendation(data);
+      if (data.error) {
+        setError(data.error);
+        setRecommendation(null);
+      } else {
+        setRecommendation(data);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -164,7 +169,7 @@ export default function FertilizerRecommendationPage() {
         {loading && <MotionP className="text-blue-500 text-center mt-4">Loading...</MotionP>}
         {error && <MotionP className="text-red-500 text-center mt-4">Error: {error}</MotionP>}
 
-        {recommendation && (
+        {!error && recommendation && recommendation.recommended_N !== undefined && (
           <MotionDiv
             className="mt-8 p-6 bg-green-100 border border-green-400 text-green-700 rounded-lg shadow-md"
             initial={{ opacity: 0, y: 50 }}

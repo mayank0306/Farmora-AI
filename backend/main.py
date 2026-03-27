@@ -219,7 +219,10 @@ async def weather_forecast (input :WeatherForecastInput ):
     url =f"http://api.weatherapi.com/v1/forecast.json?key={WEATHER_API_KEY}&q={input.city}&days={input.days}"
     response =requests .get (url )
     response .raise_for_status ()
-    data =response .json ()['forecast']['forecastday']
+    full_data =response .json ()
+    data =full_data ['forecast']['forecastday']
+    current_data = full_data.get('current', {})
+    location_data = full_data.get('location', {})
 
     forecast_summary =[]
     for day_data in data :
@@ -232,9 +235,14 @@ async def weather_forecast (input :WeatherForecastInput ):
         "avg_temp_c":day_info ['avgtemp_c'],
         "avg_humidity":day_info ['avghumidity'],
         "chance_of_rain":day_info ['daily_chance_of_rain'],
-        "condition":day_info ['condition']['text']
+        "condition":day_info ['condition']['text'],
+        "max_wind_kph":day_info.get('maxwind_kph', current_data.get('wind_kph', 0)),
+        "pressure_mb":current_data.get('pressure_mb', 0)
         })
-    return {"forecast":forecast_summary }
+    return {
+        "forecast":forecast_summary,
+        "city_name":location_data.get('name', input.city)
+    }
 
 class FertilizerRecommendationInput (BaseModel ):
     Crop :str 

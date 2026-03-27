@@ -462,14 +462,30 @@ async def recommend_fertilizer(input: FertilizerRecommendationInput):
         return {"error": "Fertilizer recommendation model is currently unavailable."}
 
     try:
-        # Encode crop name using the saved label encoder
+        # Encode crop name using the saved label encoder (case-insensitive)
         crop_name = input.Crop.strip()
+        known_crops = list(FERTILIZER_LABEL_ENCODER.classes_)
 
-        # Try to encode the crop, handle unknown crops
+        # Try exact match first
+        matched_crop = None
+        for kc in known_crops:
+            if kc.lower() == crop_name.lower():
+                matched_crop = kc
+                break
+
+        # Common aliases
+        if not matched_crop:
+            aliases = {"rice": "Paddy", "tur": "Arhar/Tur", "chana": "Gram"}
+            matched_crop = aliases.get(crop_name.lower())
+
+        if not matched_crop:
+            return {
+                "error": f"Unknown crop '{crop_name}'. Supported crops: {known_crops}"
+            }
+
         try:
-            crop_encoded = FERTILIZER_LABEL_ENCODER.transform([crop_name])[0]
+            crop_encoded = FERTILIZER_LABEL_ENCODER.transform([matched_crop])[0]
         except ValueError:
-            known_crops = list(FERTILIZER_LABEL_ENCODER.classes_)
             return {
                 "error": f"Unknown crop '{crop_name}'. Supported crops: {known_crops}"
             }
